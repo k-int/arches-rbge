@@ -3,7 +3,7 @@ from arches.app.models.tile import Tile
 class Command(BaseCommand):
     """
     Command for repairing invalid resource instance data
-​
+
     """
     def add_arguments(self, parser):
         parser.add_argument("operation", nargs="?")
