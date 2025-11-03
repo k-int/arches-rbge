@@ -1,0 +1,11 @@
+*.pyc
+*.log
+rbge/logs
+rbge/export_deliverables
+rbge/cantaloupe/*
+rbge/media/packages
+rbge/uploadedfiles/*
+rbge/settings_local.py
+rbge/static
+rbge/yarn.lock
+.vscode/
