@@ -3,8 +3,9 @@ Django settings for rbge project.
 """
 
 import os
-import arches
 import inspect
+import semantic_version
+from datetime import datetime, timedelta
 from django.utils.translation import gettext_lazy as _
 
 try:
@@ -14,16 +15,48 @@ except ImportError:
 
 APP_NAME = 'rbge'
 APP_ROOT = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+WEBPACK_LOADER = {
+    "DEFAULT": {
+        "STATS_FILE": os.path.join(APP_ROOT, "..", "webpack/webpack-stats.json"),
+    },
+}
+
+DATATYPE_LOCATIONS.append("rbge.datatypes")
+FUNCTION_LOCATIONS.append("rbge.functions")
+ETL_MODULE_LOCATIONS.append("rbge.etl_modules")
+SEARCH_COMPONENT_LOCATIONS.append("rbge.search_components")
+
+LOCALE_PATHS.insert(0, os.path.join(APP_ROOT, "locale"))
+
+FILE_TYPE_CHECKING = "lenient"
+FILE_TYPES = [
+    "bmp",
+    "gif",
+    "jpg",
+    "jpeg",
+    "json",
+    "pdf",
+    "png",
+    "psd",
+    "rtf",
+    "tif",
+    "tiff",
+    "xlsx",
+    "csv",
+    "zip",
+]
+
+FILENAME_GENERATOR = "arches.app.utils.storage_filename_generator.generate_filename"
+UPLOADED_FILES_DIR = "uploadedfiles"
+
 STATICFILES_DIRS =  (os.path.join(APP_ROOT, 'media'),) + STATICFILES_DIRS
-STATIC_ROOT = os.path.join(APP_ROOT, 'static')
+STATIC_ROOT = os.path.join(APP_ROOT, "staticfiles")
 STATIC_URL = '/static/'
 
 DATATYPE_LOCATIONS.append('rbge.datatypes')
 FUNCTION_LOCATIONS.append('rbge.functions')
 SEARCH_COMPONENT_LOCATIONS.append('rbge.search_components')
-TEMPLATES[0]['DIRS'].append(os.path.join(APP_ROOT, 'functions', 'templates'))
-TEMPLATES[0]['DIRS'].append(os.path.join(APP_ROOT, 'widgets', 'templates'))
-TEMPLATES[0]['DIRS'].insert(0, os.path.join(APP_ROOT, 'templates'))
 
 LOCALE_PATHS.append(os.path.join(APP_ROOT, 'locale'))
 
@@ -33,10 +66,32 @@ SECRET_KEY = '^ffqm%f1)@_baa%x+d@bgy$6dv7a7kl=#w@f8(_b8@ec5e+603'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ROOT_URLCONF = 'rbge.urls'
+ROOT_URLCONF = "rbge.urls"
+ROOT_HOSTCONF = "rbge.hosts"
+
+DEFAULT_HOST = "rbge"
+
+# Modify this line as needed for your project to connect to elasticsearch with a password that you generate
+ELASTICSEARCH_CONNECTION_OPTIONS = {
+    "request_timeout": 30,
+    "verify_certs": False,
+    "basic_auth": ("elastic", "E1asticSearchforArche5"),
+}
+
+# If you need to connect to Elasticsearch via an API key instead of username/password, use the syntax below:
+# ELASTICSEARCH_CONNECTION_OPTIONS = {"request_timeout": 30, "verify_certs": False, "api_key": "<ENCODED_API_KEY>"}
+# ELASTICSEARCH_CONNECTION_OPTIONS = {"request_timeout": 30, "verify_certs": False, "api_key": ("<ID>", "<API_KEY>")}
+
+# Your Elasticsearch instance needs to be configured with xpack.security.enabled=true to use API keys - update elasticsearch.yml or .env file and restart.
+
+# Set the ELASTIC_PASSWORD environment variable in either the docker-compose.yml or .env file to the password you set for the elastic user,
+# otherwise a random password will be generated.
+
+# API keys can be generated via the Elasticsearch API: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html
+# Or Kibana: https://www.elastic.co/guide/en/kibana/current/api-keys.html
 
 # a prefix to append to all elasticsearch indexes, note: must be lower case
-ELASTICSEARCH_PREFIX = 'rbge'
+ELASTICSEARCH_PREFIX = "rbge"
 
 ELASTICSEARCH_CUSTOM_INDEXES = []
 # [{
@@ -50,6 +105,11 @@ KIBANA_CONFIG_BASEPATH = "kibana"  # must match Kibana config.yml setting (serve
 
 LOAD_DEFAULT_ONTOLOGY = False
 LOAD_PACKAGE_ONTOLOGIES = True
+
+# This is the namespace to use for export of data (for RDF/XML for example)
+# It must point to the url where you host your site
+# Make sure to use a trailing slash
+ARCHES_NAMESPACE_FOR_DATA_EXPORT = "http://localhost:8000/"
 
 DATABASES = {
     "default": {
@@ -74,63 +134,111 @@ DATABASES = {
     }
 }
 
+SEARCH_THUMBNAILS = False
+
 INSTALLED_APPS = (
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.gis',
-    'arches',
-    'arches.app.models',
-    'arches.management',
-    'guardian',
-    'captcha',
-    'revproxy',
-    'corsheaders',
-    'oauth2_provider',
-    'django_celery_results',
-    'rbge',
+    "webpack_loader",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.gis",
+    "django_hosts",
+    "arches",
+    "arches.app.models",
+    "arches.management",
+    "guardian",
+    "captcha",
+    "revproxy",
+    "corsheaders",
+    "oauth2_provider",
+    "django_celery_results",
+    # "silk",
+    "rbge",  # Ensure the project is listed before any other arches applications
+)
+
+# Placing this last ensures any templates provided by Arches Applications
+# take precedence over core arches templates in arches/app/templates.
+INSTALLED_APPS += ("arches.app",)
+
+MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    #'arches.app.utils.middleware.TokenMiddleware',
+    "django.middleware.locale.LocaleMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "arches.app.utils.middleware.ModifyAuthorizationHeader",
+    "oauth2_provider.middleware.OAuth2TokenMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "arches.app.utils.middleware.SetAnonymousUser",
+    # "silk.middleware.SilkyMiddleware",
+]
+
+MIDDLEWARE.insert(  # this must resolve to first MIDDLEWARE entry
+    0, "django_hosts.middleware.HostsRequestMiddleware"
+)
+
+MIDDLEWARE.append(  # this must resolve last MIDDLEWARE entry
+    "django_hosts.middleware.HostsResponseMiddleware"
+)
+
+STATICFILES_DIRS = build_staticfiles_dirs(app_root=APP_ROOT)
+
+TEMPLATES = build_templates_config(
+    debug=DEBUG,
+    app_root=APP_ROOT,
 )
 
 ALLOWED_HOSTS = []
 
-SYSTEM_SETTINGS_LOCAL_PATH = os.path.join(APP_ROOT, 'system_settings', 'System_Settings.json')
-WSGI_APPLICATION = 'rbge.wsgi.application'
+SYSTEM_SETTINGS_LOCAL_PATH = os.path.join(
+    APP_ROOT, "system_settings", "System_Settings.json"
+)
+WSGI_APPLICATION = "rbge.wsgi.application"
 
 RESOURCE_IMPORT_LOG = os.path.join(APP_ROOT, 'logs', 'resource_import.log')
 DEFAULT_RESOURCE_IMPORT_USER = {'username': 'admin', 'userid': 1}
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'console': {
-            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console": {
+            "format": "%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
         },
     },
-    'handlers': {
-        'file': {
-            'level': 'WARNING',  # DEBUG, INFO, WARNING, ERROR
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(APP_ROOT, 'arches.log'),
-            'formatter': 'console'
+    "handlers": {
+        "file": {
+            "level": "WARNING",  # DEBUG, INFO, WARNING, ERROR
+            "class": "logging.FileHandler",
+            "filename": os.path.join(APP_ROOT, "arches.log"),
+            "formatter": "console",
         },
-        'console': {
-            'level': 'WARNING',
-            'class': 'logging.StreamHandler',
-            'formatter': 'console'
+        "console": {
+            "level": "WARNING",
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+        },
+    },
+    "loggers": {
+        "arches": {
+            "handlers": ["file", "console"],
+            "level": "WARNING",
+            "propagate": True,
         }
     },
-    'loggers': {
-        'arches': {
-            'handlers': ['file', 'console'],
-            'level': 'WARNING',
-            'propagate': True
-        }
-    }
 }
+
+# Rate limit for authentication views
+# See options (including None or python callables):
+# https://django-ratelimit.readthedocs.io/en/stable/rates.html#rates-chapter
+RATE_LIMIT = "5/m"
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 MEDIA_ROOT =  os.path.join(APP_ROOT)
@@ -144,9 +252,13 @@ SESSION_COOKIE_NAME = 'rbge'
 
 # For more info on configuring your cache: https://docs.djangoproject.com/en/2.2/topics/cache/
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-    }
+    "default": {
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+    },
+    "user_permission": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "user_permission_cache",
+    },
 }
 
 # Hide nodes and cards in a report that have no data
@@ -159,14 +271,7 @@ CACHE_BY_USER = {'anonymous': 3600 * 24}
 TILE_CACHE_TIMEOUT = 600 #seconds
 GRAPH_MODEL_CACHE_TIMEOUT = None
 
-MOBILE_OAUTH_CLIENT_ID = ''  #'9JCibwrWQ4hwuGn5fu2u1oRZSs9V6gK8Vu8hpRC4'
-MOBILE_DEFAULT_ONLINE_BASEMAP = {'default': 'mapbox://styles/mapbox/streets-v9'}
-MOBILE_IMAGE_SIZE_LIMITS = {
-    # These limits are meant to be approximates. Expect to see uploaded sizes range +/- 20%
-    # Not to exceed the limit defined in DATA_UPLOAD_MAX_MEMORY_SIZE
-    "full": min(1500000, DATA_UPLOAD_MAX_MEMORY_SIZE), # ~1.5 Mb
-    "thumb": 400,  # max width/height in pixels, this will maintain the aspect ratio of the original image
-}
+OAUTH_CLIENT_ID = ''  #'9JCibwrWQ4hwuGn5fu2u1oRZSs9V6gK8Vu8hpRC4'
 
 APP_TITLE = 'Arches | Heritage Data Management'
 COPYRIGHT_TEXT = 'All Rights Reserved.'
@@ -178,33 +283,86 @@ ENABLE_CAPTCHA = False
 # RECAPTCHA_USE_SSL = False
 NOCAPTCHA = True
 # RECAPTCHA_PROXY = 'http://127.0.0.1:8000'
-if DEBUG is True:
-    SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  #<-- Only need to uncomment this for testing without an actual email server
 # EMAIL_USE_TLS = True
 # EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_HOST_USER = 'xxxx@xxx.com'
+EMAIL_HOST_USER = 'xxxx@xxx.com'
 # EMAIL_HOST_PASSWORD = 'xxxxxxx'
 # EMAIL_PORT = 587
 
-CELERY_BROKER_URL = 'amqp://guest:guest@localhost'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_RESULT_BACKEND = 'django-db' # Use 'django-cache' if you want to use your cache as your backend
-CELERY_TASK_SERIALIZER = 'json'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+CELERY_BROKER_URL = ""  # RabbitMQ --> "amqp://guest:guest@localhost",  Redis --> "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_RESULT_BACKEND = (
+    "django-db"  # Use 'django-cache' if you want to use your cache as your backend
+)
+CELERY_TASK_SERIALIZER = "json"
 
 CELERY_SEARCH_EXPORT_EXPIRES = 24 * 3600  # seconds
 CELERY_SEARCH_EXPORT_CHECK = 3600  # seconds
 
 CELERY_BEAT_SCHEDULE = {
-    "delete-expired-search-export": {"task": "arches.app.tasks.delete_file", "schedule": CELERY_SEARCH_EXPORT_CHECK,},
-    "notification": {"task": "arches.app.tasks.message", "schedule": CELERY_SEARCH_EXPORT_CHECK, "args": ("Celery Beat is Running",),},
+    "delete-expired-search-export": {
+        "task": "arches.app.tasks.delete_file",
+        "schedule": CELERY_SEARCH_EXPORT_CHECK,
+    },
+    "notification": {
+        "task": "arches.app.tasks.message",
+        "schedule": CELERY_SEARCH_EXPORT_CHECK,
+        "args": ("Celery Beat is Running",),
+    },
 }
+
+# Set to True if you want to send celery tasks to the broker without being able to detect celery.
+# This might be necessary if the worker pool is regulary fully active, with no idle workers, or if
+# you need to run the celery task using solo pool (e.g. on Windows). You may need to provide another
+# way of monitoring celery so you can detect the background task not being available.
+CELERY_CHECK_ONLY_INSPECT_BROKER = False
+
+ACCESSIBILITY_MODE = False
+
+RENDERERS = [
+    {
+        "name": "imagereader",
+        "title": "Image Reader",
+        "description": "Displays most image file types",
+        "id": "5e05aa2e-5db0-4922-8938-b4d2b7919733",
+        "iconclass": "fa fa-camera",
+        "component": "views/components/cards/file-renderers/imagereader",
+        "ext": "",
+        "type": "image/*",
+        "exclude": "tif,tiff,psd",
+    },
+    {
+        "name": "pdfreader",
+        "title": "PDF Reader",
+        "description": "Displays pdf files",
+        "id": "09dec059-1ee8-4fbd-85dd-c0ab0428aa94",
+        "iconclass": "fa fa-file",
+        "component": "views/components/cards/file-renderers/pdfreader",
+        "ext": "pdf",
+        "type": "application/pdf",
+        "exclude": "tif,tiff,psd",
+    },
+]
 
 # By setting RESTRICT_MEDIA_ACCESS to True, media file requests outside of Arches will checked against nodegroup permissions.
 RESTRICT_MEDIA_ACCESS = False
 
+# By setting RESTRICT_CELERY_EXPORT_FOR_ANONYMOUS_USER to True, if the user is attempting
+# to export search results above the SEARCH_EXPORT_IMMEDIATE_DOWNLOAD_THRESHOLD
+# value and is not signed in with a user account then the request will not be allowed.
+RESTRICT_CELERY_EXPORT_FOR_ANONYMOUS_USER = False
+
+# Dictionary containing any additional context items for customising email templates
+EXTRA_EMAIL_CONTEXT = {
+    "salutation": _("Hi"),
+    "expiration": (
+        datetime.now() + timedelta(seconds=CELERY_SEARCH_EXPORT_EXPIRES)
+    ).strftime("%A, %d %B %Y"),
+}
 
 # see https://docs.djangoproject.com/en/1.9/topics/i18n/translation/#how-django-discovers-language-preference
 # to see how LocaleMiddleware tries to determine the user's language preference
@@ -233,16 +391,16 @@ LANGUAGE_CODE = "en"
 # language codes need to be all lower case with the form:
 # {langcode}-{regioncode} eg: en, en-gb ....
 # a list of language codes can be found here http://www.i18nguy.com/unicode/language-identifiers.html
+
 LANGUAGES = [
-#   ('de', _('German')),
-#   ('en', _('English')),
-#   ('en-gb', _('British English')),
-#   ('es', _('Spanish')),
+    # ('de', _('German')),
+    ('en', _('English')),
+    # ('en-gb', _('British English')),
+    # ('es', _('Spanish')),
 ]
 
 # override this to permenantly display/hide the language switcher
 SHOW_LANGUAGE_SWITCH = len(LANGUAGES) > 1
-
 
 try:
     from .package_settings import *
