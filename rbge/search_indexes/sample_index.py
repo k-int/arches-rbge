@@ -5,11 +5,9 @@ class SampleIndex(BaseIndex):
     def prepare_index(self):
         self.index_metadata = {
             "mappings": {
-                "_doc": {
-                    "properties": {
-                        "tile_count": {"type": "keyword"},
-                        "graph_id": {"type": "keyword"},
-                    }
+                "properties": {
+                    "tile_count": {"type": "keyword"},
+                    "graph_id": {"type": "keyword"},
                 }
             }
         }
