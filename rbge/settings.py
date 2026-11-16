@@ -13,7 +13,7 @@ try:
 except ImportError:
     pass
 
-APP_NAME = 'rbge'
+APP_NAME = "rbge"
 APP_ROOT = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 WEBPACK_LOADER = {
@@ -50,18 +50,18 @@ FILE_TYPES = [
 FILENAME_GENERATOR = "arches.app.utils.storage_filename_generator.generate_filename"
 UPLOADED_FILES_DIR = "uploadedfiles"
 
-STATICFILES_DIRS =  (os.path.join(APP_ROOT, 'media'),) + STATICFILES_DIRS
+STATICFILES_DIRS = (os.path.join(APP_ROOT, "media"),) + STATICFILES_DIRS
 STATIC_ROOT = os.path.join(APP_ROOT, "staticfiles")
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
-DATATYPE_LOCATIONS.append('rbge.datatypes')
-FUNCTION_LOCATIONS.append('rbge.functions')
-SEARCH_COMPONENT_LOCATIONS.append('rbge.search_components')
+DATATYPE_LOCATIONS.append("rbge.datatypes")
+FUNCTION_LOCATIONS.append("rbge.functions")
+SEARCH_COMPONENT_LOCATIONS.append("rbge.search_components")
 
-LOCALE_PATHS.append(os.path.join(APP_ROOT, 'locale'))
+LOCALE_PATHS.append(os.path.join(APP_ROOT, "locale"))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '^ffqm%f1)@_baa%x+d@bgy$6dv7a7kl=#w@f8(_b8@ec5e+603'
+SECRET_KEY = "^ffqm%f1)@_baa%x+d@bgy$6dv7a7kl=#w@f8(_b8@ec5e+603"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -123,14 +123,9 @@ DATABASES = {
         "PASSWORD": "postgis",
         "PORT": "5432",
         "POSTGIS_TEMPLATE": "template_postgis",
-        "TEST": {
-            "CHARSET": None,
-            "COLLATION": None,
-            "MIRROR": None,
-            "NAME": None
-        },
+        "TEST": {"CHARSET": None, "COLLATION": None, "MIRROR": None, "NAME": None},
         "TIME_ZONE": None,
-        "USER": "postgres"
+        "USER": "postgres",
     }
 }
 
@@ -202,8 +197,8 @@ SYSTEM_SETTINGS_LOCAL_PATH = os.path.join(
 )
 WSGI_APPLICATION = "rbge.wsgi.application"
 
-RESOURCE_IMPORT_LOG = os.path.join(APP_ROOT, 'logs', 'resource_import.log')
-DEFAULT_RESOURCE_IMPORT_USER = {'username': 'admin', 'userid': 1}
+RESOURCE_IMPORT_LOG = os.path.join(APP_ROOT, "logs", "resource_import.log")
+DEFAULT_RESOURCE_IMPORT_USER = {"username": "admin", "userid": 1}
 
 LOGGING = {
     "version": 1,
@@ -241,14 +236,14 @@ LOGGING = {
 RATE_LIMIT = "5/m"
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
-MEDIA_ROOT =  os.path.join(APP_ROOT)
-MEDIA_URL = '/files/'
+MEDIA_ROOT = os.path.join(APP_ROOT)
+MEDIA_URL = "/files/"
 
 # Sets default max upload size to 15MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
 
 # Unique session cookie ensures that logins are treated separately for each app
-SESSION_COOKIE_NAME = 'rbge'
+SESSION_COOKIE_NAME = "rbge"
 
 # For more info on configuring your cache: https://docs.djangoproject.com/en/2.2/topics/cache/
 CACHES = {
@@ -264,18 +259,20 @@ CACHES = {
 # Hide nodes and cards in a report that have no data
 HIDE_EMPTY_NODES_IN_REPORT = False
 
-DATE_IMPORT_EXPORT_FORMAT = "%Y-%m-%d" # Custom date format for dates imported from and exported to csv
+DATE_IMPORT_EXPORT_FORMAT = (
+    "%Y-%m-%d"  # Custom date format for dates imported from and exported to csv
+)
 
-#Identify the usernames and duration (seconds) for which you want to cache the time wheel
-CACHE_BY_USER = {'anonymous': 3600 * 24}
-TILE_CACHE_TIMEOUT = 600 #seconds
+# Identify the usernames and duration (seconds) for which you want to cache the time wheel
+CACHE_BY_USER = {"anonymous": 3600 * 24}
+TILE_CACHE_TIMEOUT = 600  # seconds
 GRAPH_MODEL_CACHE_TIMEOUT = None
 
-OAUTH_CLIENT_ID = ''  #'9JCibwrWQ4hwuGn5fu2u1oRZSs9V6gK8Vu8hpRC4'
+OAUTH_CLIENT_ID = ""  #'9JCibwrWQ4hwuGn5fu2u1oRZSs9V6gK8Vu8hpRC4'
 
-APP_TITLE = 'Arches | Heritage Data Management'
-COPYRIGHT_TEXT = 'All Rights Reserved.'
-COPYRIGHT_YEAR = '2019'
+APP_TITLE = "Arches | Heritage Data Management"
+COPYRIGHT_TEXT = "All Rights Reserved."
+COPYRIGHT_YEAR = "2019"
 
 ENABLE_CAPTCHA = False
 # RECAPTCHA_PUBLIC_KEY = ''
@@ -287,7 +284,7 @@ NOCAPTCHA = True
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  #<-- Only need to uncomment this for testing without an actual email server
 # EMAIL_USE_TLS = True
 # EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'xxxx@xxx.com'
+EMAIL_HOST_USER = "xxxx@xxx.com"
 # EMAIL_HOST_PASSWORD = 'xxxxxxx'
 # EMAIL_PORT = 587
 
@@ -371,8 +368,8 @@ EXTRA_EMAIL_CONTEXT = {
 # to see how the language code is derived in the actual code
 
 ####### TO GENERATE .PO FILES DO THE FOLLOWING ########
-# run the following commands 
-# language codes used in the command should be in the form (which is slightly different 
+# run the following commands
+# language codes used in the command should be in the form (which is slightly different
 # form the form used in the LANGUAGE_CODE and LANGUAGES settings below):
 # --local={countrycode}_{REGIONCODE} <-- countrycode is lowercase, regioncode is uppercase, also notice the underscore instead of hyphen
 # commands to run (to generate files for "British English, German, and Spanish"):
@@ -386,7 +383,7 @@ EXTRA_EMAIL_CONTEXT = {
 # a list of language codes can be found here http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = "en"
 
-# list of languages to display in the language switcher, 
+# list of languages to display in the language switcher,
 # if left empty or with a single entry then the switch won't be displayed
 # language codes need to be all lower case with the form:
 # {langcode}-{regioncode} eg: en, en-gb ....
@@ -394,7 +391,7 @@ LANGUAGE_CODE = "en"
 
 LANGUAGES = [
     # ('de', _('German')),
-    ('en', _('English')),
+    ("en", _("English")),
     # ('en-gb', _('British English')),
     # ('es', _('Spanish')),
 ]
